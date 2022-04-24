@@ -2,10 +2,8 @@ using UnityEngine;
 class IdleState : BaseState 
 {
   private Player _player;
-  private StateMachine _stateMachine;
   CollisionManager _collisionManager;
-  public IdleState(string name, StateMachine stateMachine, Player player, CollisionManager collisionManager):base(name){
-      _stateMachine = stateMachine;
+  public IdleState(string name, Player player, CollisionManager collisionManager):base(name){
       _player = player;
       _collisionManager = collisionManager;
   }

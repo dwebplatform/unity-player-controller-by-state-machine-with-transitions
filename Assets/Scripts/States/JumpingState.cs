@@ -2,10 +2,8 @@
 // using System.Collections.Generic;
 using UnityEngine;
 
-
 class JumpingState : BaseState
 {
-  private StateMachine _stateMachine;
   private Player _player;
   private CollisionManager _collisionManager;
   private float _jumpForce = 5f;
@@ -14,14 +12,12 @@ class JumpingState : BaseState
   private ClockController _clockController;
 
   private HittedParams hittedParams;
-  public JumpingState(string name, StateMachine stateMachine, Player player, CollisionManager collisionManager, ClockController clockController) : base(name)
+  public JumpingState(string name,  Player player, CollisionManager collisionManager, ClockController clockController) : base(name)
   {
-    _stateMachine = stateMachine;
     _player = player;
     _collisionManager = collisionManager;
     _clockController = clockController;
   }
-
 
   private bool IsMovingIntoWall()
   {
@@ -86,7 +82,6 @@ class JumpingState : BaseState
               else
               {
                 _player.hittedWall = leftColliders[0];
-                //TODO Adjust collision position
                 hittedParams.isHittedLeft = true;
               }
             }, (rightColliders) =>
@@ -98,7 +93,6 @@ class JumpingState : BaseState
               }
               else
               {
-                //TODO Adjust collision position
                 _player.hittedWall = rightColliders[0];
                 hittedParams.isHittedRight = true;
               }
@@ -115,17 +109,14 @@ class JumpingState : BaseState
       {
         _player._velocity.x = _horizontalInput * Player.SPEED_MAGNITUDE;
       }
-      else
-      {
-        _player._velocity.x = 0f;
-      }
+       
     }
     else
     {
       _player._velocity.x = _horizontalInput * Player.SPEED_MAGNITUDE;
     }
 
-     if (!_player.isGrounded)
+    if (!_player.isGrounded)
     {
       _player._velocity.y -= Player.GRAVITY * Time.fixedDeltaTime;
     }

@@ -8,15 +8,13 @@ struct HittedParams {
 class WalkingState : BaseState
 {
   private Player _player;
-  private StateMachine _stateMachine;
   private float _horizontalInput;
   CollisionManager _collisionManager;
   private float _speed = 8f;
   HittedParams hittedParams;
-  public WalkingState(string name, StateMachine stateMachine, Player player,CollisionManager collisionManager) : base(name)
+  public WalkingState(string name, Player player,CollisionManager collisionManager) : base(name)
   {
     _player = player;
-    _stateMachine = stateMachine;
     _collisionManager = collisionManager;
   }
   public override void Enter()
@@ -65,7 +63,6 @@ class WalkingState : BaseState
                   hittedParams.isHittedLeft  = false;
               } else {
                   _player.hittedWall = leftColliders[0];
-                  //TODO Adjust collision position
                   hittedParams.isHittedLeft  = true;
               }
             },(rightColliders)=>{
@@ -73,7 +70,6 @@ class WalkingState : BaseState
               if(rightColliders.Count == 0){
                   hittedParams.isHittedRight = false;
               } else {
-                  //TODO Adjust collision position
                   _player.hittedWall = rightColliders[0];
                   hittedParams.isHittedRight = true;
               }
@@ -88,9 +84,7 @@ class WalkingState : BaseState
             if(_player.hittedWall != null){
                 if(!IsMovingIntoWall()){
                   _player._velocity.x = _horizontalInput * Player.SPEED_MAGNITUDE;
-                } else {
-                  _player._velocity.x = 0f;
-                }
+                } 
             } else {
               _player._velocity.x = _horizontalInput * Player.SPEED_MAGNITUDE;
             }

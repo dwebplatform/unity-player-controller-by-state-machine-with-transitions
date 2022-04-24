@@ -3,7 +3,8 @@ using System;
 using System.Collections.Generic;
 
 
-public class CollisionExpanded {
+public class CollisionExpanded
+{
   public Vector2 normal;
   public Collider2D collider;
 }
@@ -14,6 +15,7 @@ public class CollisionManager
   private LayerMask isWallLayer;
   private ContactFilter2D _filter;
   private Collider2D[] results = new Collider2D[1];
+
   public CollisionManager(Player player)
   {
     _player = player;
@@ -38,7 +40,7 @@ public class CollisionManager
   public CollisionManager CheckWall(float offset, Action<List<CollisionExpanded>> onHitRightWallCallBack,
    Action<List<CollisionExpanded>> onHitLeftWallCallBack)
   {
-    Vector2 topPosition = new Vector2(_player.GetTransform().position.x, 
+    Vector2 topPosition = new Vector2(_player.GetTransform().position.x,
     _player.GetTransform().position.y + _player.GetBoxCollider().size.y / 2);
     Vector2 middlePosition = _player.GetTransform().position;
     Vector2 bottomPosition = new Vector2(_player.GetTransform().position.x, _player.GetTransform().position.y - _player.GetBoxCollider().size.y / 2);
@@ -79,4 +81,16 @@ public class CollisionManager
 
     return this;
   }
+
+
+  static public Vector3 AdjustPosition(CollisionExpanded collidedInfo, Vector3 position, BoxCollider2D boxCollider)
+  {
+    Vector3 normal = collidedInfo.normal.normalized;
+
+    Vector3 difference = -Mathf.Sign(normal.x) *(collidedInfo.collider.transform.position - position);
+    float gap = difference.x - collidedInfo.collider.bounds.size.x / 2 - boxCollider.size.x / 2;
+    Vector3 correctedPosition = position - new Vector3(normal.x * gap, normal.y * gap, 0f);
+    return correctedPosition;
+  }
+
 }

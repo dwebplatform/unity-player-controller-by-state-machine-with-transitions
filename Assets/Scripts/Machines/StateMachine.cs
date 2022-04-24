@@ -19,7 +19,10 @@ class StateMachine
   private BaseState _currentState;
   public static IdleState idleState;
   public static GrabWallState grabWallState;
+
+  public static WalkingAwayFromGrabbingState walkingAwayFromGrabbingState;
   public static JumpingState jumpingState;
+  public static JumpAwayWallWithInitialHorizontalInput jumpAwayWallWithInitialHorizontalInput;
   public static WalkingState walkingState;
   private Dictionary<Type, List<Transition>> _transitions = new Dictionary<Type, List<Transition>>();
   private List<Transition> currentTransitions = new List<Transition>();

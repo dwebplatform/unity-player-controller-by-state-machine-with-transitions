@@ -1,9 +1,9 @@
 using System;
 using UnityEngine;
 
-
 public class ClockController {
   public bool isGravityIgnored;
+  public bool isGrabWallIgnored;
 }
 public class PlayerController : MonoBehaviour
 {
@@ -14,6 +14,7 @@ public class PlayerController : MonoBehaviour
   public static CollisionManager collisionManager;
   public static float WALL_OFFSET = 0.1f;
   public ClockController clockController;
+
   private bool IsHorizontalNotPressed()
   {
     return Mathf.Abs(CtxInputManager.getHorizontalInput()) <= Mathf.Epsilon;
@@ -22,8 +23,6 @@ public class PlayerController : MonoBehaviour
   {
     return Mathf.Abs(CtxInputManager.getHorizontalInput()) > Mathf.Epsilon;
   }
-  
-
   private bool isGravityIgnored(){
     return clockController.isGravityIgnored;
   }
@@ -31,9 +30,48 @@ public class PlayerController : MonoBehaviour
     return _player.isGrounded;
   }
 
-  private bool IsPlayerFacesWall(){
-    return _player.hittedWall!=null;
+
+  private bool IsHorizontalPushedToWall(){
+    if(_player.hittedWall == null){
+      return false;
+    }
+
+    Vector2 normal = _player.hittedWall.normal;
+    return (CtxInputManager.getHorizontalInput()>0f&& normal.x<0f)||(CtxInputManager.getHorizontalInput()<0f&& normal.x>0f);
   }
+  private bool IsHorizontalInversedToWall(){
+
+    if(_player.hittedWall == null){
+      return false;
+    }
+
+    Vector2 normal = _player.hittedWall.normal;
+    return (CtxInputManager.getHorizontalInput() > 0f && normal.x > 0f) || (CtxInputManager.getHorizontalInput() < 0f && normal.x < 0f);
+  }  
+  
+  private bool IsPreviosInputOver(){
+    return !_player.isPreviosInputExist;
+  }
+  private bool IsHorizontalPressedReversedToMovement(){
+
+    return (CtxInputManager.getHorizontalInput()>0f && _player._velocity.x<0f)||((CtxInputManager.getHorizontalInput()<0f && _player._velocity.x>0f));
+  }
+
+
+  private bool IsWallCheckIgnored(){
+    return clockController.isGrabWallIgnored;
+  }
+  private bool IsPlayerFacesWall(){
+    //* player faces wall when direction of normal and input inversed to each other
+    if(_player.hittedWall == null){
+      return false;
+    }
+
+    Vector2 normal = _player.hittedWall.normal;
+
+    return  (_player._velocity.x > 0f && normal.x < 0f) || (_player._velocity.x < 0f && normal.x > 0f);
+  }
+
   private void Awake()
   {
     _rigidBody = GetComponent<Rigidbody2D>();
@@ -45,16 +83,32 @@ public class PlayerController : MonoBehaviour
     clockController = new ClockController();
     PlayerController.collisionManager = new CollisionManager(_player);
 
-    StateMachine.idleState = new IdleState("IdleState", _stateMachine, _player,PlayerController.collisionManager);
-    StateMachine.walkingState = new WalkingState("WalkingState", _stateMachine, _player, PlayerController.collisionManager);
-    StateMachine.jumpingState = new JumpingState("JumpingState", _stateMachine, _player, PlayerController.collisionManager,clockController);
-    StateMachine.grabWallState = new GrabWallState("GrabWallState", _stateMachine, _player);
-    //*TODO add WallCheck Collision for player three dots lazer from left and right!!!!!!!
-    When(StateMachine.walkingState, StateMachine.idleState, ()=>IsHorizontalNotPressed() && PlayerIsGrounded());
+    StateMachine.idleState = new IdleState("IdleState", _player,PlayerController.collisionManager);
+    StateMachine.walkingState = new WalkingState("WalkingState", _player, PlayerController.collisionManager);
+    StateMachine.jumpingState = new JumpingState("JumpingState",  _player, PlayerController.collisionManager,clockController);
+    StateMachine.grabWallState = new GrabWallState("GrabWallState", _player, PlayerController.collisionManager);
+    StateMachine.walkingAwayFromGrabbingState = new WalkingAwayFromGrabbingState("WalkingAwayFromGrabbingState", _player,PlayerController.collisionManager, clockController);
+    StateMachine.jumpAwayWallWithInitialHorizontalInput = new JumpAwayWallWithInitialHorizontalInput("JumpAwayWallWithInitialHorizontalInput",_player,collisionManager, clockController);
+
+
+    When(StateMachine.jumpAwayWallWithInitialHorizontalInput,StateMachine.walkingState,()=>IsPreviosInputOver() && IsHorizontalPressedReversedToMovement());
+    When(StateMachine.jumpAwayWallWithInitialHorizontalInput, StateMachine.idleState,()=>PlayerIsGrounded());
+
+    When(StateMachine.walkingAwayFromGrabbingState, StateMachine.grabWallState,()=>!IsWallCheckIgnored() && IsPlayerFacesWall());
+    When(StateMachine.walkingAwayFromGrabbingState,StateMachine.idleState,()=>PlayerIsGrounded());
+    
+    When(StateMachine.grabWallState, StateMachine.jumpAwayWallWithInitialHorizontalInput,()=>IsHorizontalPushedToWall() && Input.GetKey(KeyCode.Space));
+    When(StateMachine.grabWallState, StateMachine.idleState, PlayerIsGrounded);
+    When(StateMachine.grabWallState, StateMachine.walkingAwayFromGrabbingState,()=>IsHorizontalInversedToWall());
+
+    When(StateMachine.walkingState, StateMachine.idleState,    ()=>IsHorizontalNotPressed() && PlayerIsGrounded());
+    When(StateMachine.walkingState, StateMachine.jumpingState, ()=> Input.GetKey(KeyCode.Space) && PlayerIsGrounded());
+    When(StateMachine.walkingState, StateMachine.grabWallState, ()=>IsPlayerFacesWall() && !PlayerIsGrounded());
+
     When(StateMachine.idleState,    StateMachine.walkingState, isHorizontalPressed);
-    When(StateMachine.jumpingState, StateMachine.grabWallState,()=>IsPlayerFacesWall() && !PlayerIsGrounded());
     When(StateMachine.idleState,    StateMachine.jumpingState, ()=> Input.GetKey(KeyCode.Space));
-    When(StateMachine.walkingState, StateMachine.jumpingState, ()=> Input.GetKey(KeyCode.Space));
+    
+    When(StateMachine.jumpingState, StateMachine.grabWallState,()=>IsPlayerFacesWall() && !PlayerIsGrounded());
     When(StateMachine.jumpingState, StateMachine.idleState,    ()=> PlayerIsGrounded() && !isGravityIgnored());
 
     _stateMachine.Initialize();
@@ -67,8 +121,8 @@ public class PlayerController : MonoBehaviour
   
   private void Update()
   {
-    _stateMachine.HandleInput();
-    _stateMachine.LogicUpdate();
+    _stateMachine?.HandleInput();
+    _stateMachine?.LogicUpdate();
   }
   public void FixedUpdate()
   {
