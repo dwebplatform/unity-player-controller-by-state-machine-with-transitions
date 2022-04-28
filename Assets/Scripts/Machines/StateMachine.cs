@@ -19,6 +19,7 @@ class StateMachine
   private BaseState _currentState;
   public static IdleState idleState;
   public static GrabWallState grabWallState;
+  public static JumpAwayWithZeroHorizontalInputState jumpAwayWithZeroHorizontalInputState; 
 
   public static WalkingAwayFromGrabbingState walkingAwayFromGrabbingState;
   public static JumpingState jumpingState;

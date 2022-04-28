@@ -11,8 +11,10 @@ class JumpingState : BaseState
   private float _horizontalInput;
   private ClockController _clockController;
 
+  private bool _isFacingRight;
+
   private HittedParams hittedParams;
-  public JumpingState(string name,  Player player, CollisionManager collisionManager, ClockController clockController) : base(name)
+  public JumpingState(string name, Player player, CollisionManager collisionManager, ClockController clockController) : base(name)
   {
     _player = player;
     _collisionManager = collisionManager;
@@ -43,6 +45,8 @@ class JumpingState : BaseState
     _player._velocity = new Vector2(targetVelocity.x, _jumpForce);
     _startTime = Time.time;
     _clockController.isGravityIgnored = true;
+    _isFacingRight = Input.GetAxisRaw("Horizontal") > 0f;
+
   }
   public override void LogicUpdate()
   {
@@ -109,7 +113,7 @@ class JumpingState : BaseState
       {
         _player._velocity.x = _horizontalInput * Player.SPEED_MAGNITUDE;
       }
-       
+
     }
     else
     {
@@ -120,7 +124,12 @@ class JumpingState : BaseState
     {
       _player._velocity.y -= Player.GRAVITY * Time.fixedDeltaTime;
     }
+
+
+
+
   }
+
   public override void Exit()
   {
     base.Exit();
